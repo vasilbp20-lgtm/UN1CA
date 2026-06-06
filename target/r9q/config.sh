@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Salvo Giangreco
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Device configuration file for Galaxy S22 (Snapdragon) (r0q)
+# Device configuration file for Galaxy S21 FE (Snapdragon) (r9q)
 TARGET_NAME="Galaxy S21 FE (Snapdragon)"
 TARGET_CODENAME="r9q"
 TARGET_PLATFORM="sm8350"
