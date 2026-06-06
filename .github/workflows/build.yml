@@ -78,6 +78,11 @@ jobs:
           ./scripts/extract_fw.sh
 
       - name: Build ROM
+        env:
+          TARGET_ODM_PARTITION_SIZE: "209715200"
+          TARGET_SYSTEM_PARTITION_SIZE: "4294967296"
+          TARGET_VENDOR_PARTITION_SIZE: "2147483648"
+          TARGET_PRODUCT_PARTITION_SIZE: "2147483648"
         run: |
           source ./buildenv.sh ${{ matrix.target }}
           ./scripts/make_rom.sh
