@@ -34,12 +34,6 @@ jobs:
           echo -n "${{ secrets.PLATFORM_KEY_PEM }}" | base64 --decode > security/unica_platform.x509.pem
 
       - name: Build ROM
-        env:
-          TARGET_ODM_PARTITION_SIZE: "209715200"
-          # Set to 6.4 GB to fit your 5.3 GB system image
-          TARGET_SYSTEM_PARTITION_SIZE: "6871947673"
-          TARGET_VENDOR_PARTITION_SIZE: "2147483648"
-          TARGET_PRODUCT_PARTITION_SIZE: "2147483648"
         run: |
           source ./buildenv.sh ${{ matrix.target }}
           ./scripts/build_dependencies.sh
