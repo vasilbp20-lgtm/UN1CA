@@ -14,14 +14,22 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-24.04
-
-    strategy:
+     strategy:
+      matrix:
+        include:
+          - target: r9q
+            ODM_SIZE: "209715200"
+            SYSTEM_SIZE: "4294967296"
+            VENDOR_SIZE: "2147483648"
+            PRODUCT_SIZE: "2147483648"
+          # Add other devices here similarly
       fail-fast: false
       matrix:
         target: [a52sxq, a53x, a73xq, b0q, g0q, m52xq, o1s, p3s, r0q, r9s, t2s, r9q]
 
     steps:
       - name: Checkout repo
+      - uses: actions/checkout@v3
         uses: actions/checkout@v6
         with:
           submodules: 'recursive'
