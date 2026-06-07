@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+# Force partition sizes
+export TARGET_ODM_PARTITION_SIZE="209715200"
+export TARGET_SYSTEM_PARTITION_SIZE="4294967296"
+export TARGET_VENDOR_PARTITION_SIZE="2147483648"
+export TARGET_PRODUCT_PARTITION_SIZE="2147483648"
+
 # Copyright (c) 2026 Salvo Giangreco
 # SPDX-License-Identifier: GPL-3.0-or-later
 
