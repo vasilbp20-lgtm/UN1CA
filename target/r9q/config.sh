@@ -1,4 +1,5 @@
-# OS and Partition Configuration
+# Target and Build Information
+TARGET_NAME="r9q"
 TARGET_OS_SINGLE_SYSTEM_IMAGE="essi"
 TARGET_BOARD_API_LEVEL="31"
 TARGET_OS_BUILD_SYSTEM_EXT_PARTITION=false
