@@ -44,12 +44,6 @@ jobs:
           ./scripts/extract_fw.sh
           ./scripts/make_rom.sh
 
-      - name: Debug: List build output
-        if: always()
-        run: |
-          echo "Listing contents of output directory:"
-          ls -R out/target/product/${{ matrix.target }}
-
       - name: Create Release and Upload Asset
         if: success()
         uses: softprops/action-gh-release@v1
