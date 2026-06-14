@@ -1,5 +1,8 @@
 name: Build
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
   push:
@@ -40,3 +43,13 @@ jobs:
           ./scripts/download_fw.sh
           ./scripts/extract_fw.sh
           ./scripts/make_rom.sh
+
+      - name: Create Release and Upload Asset
+        if: success()
+        uses: softprops/action-gh-release@v1
+        with:
+          files: out/target/product/${{ matrix.target }}/*.zip
+          tag_name: ${{ github.run_id }}
+          name: "Build ${{ github.run_id }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
