@@ -25,7 +25,6 @@ jobs:
         run: |
           sudo swapoff -a
           sudo rm -f /swapfile
-          # Using || true ensures the build continues if a package isn't found
           sudo apt-get purge -y azure-cli google-cloud-sdk hhvm google-chrome-stable firefox powershell || true
           sudo apt-get autoremove -y
           sudo apt-get clean
@@ -53,13 +52,17 @@ jobs:
 
       - name: Locate ZIP file
         if: always()
-        run: find out -name "*.zip"
+        run: |
+          echo "Deep scanning for ROM files..."
+          find out -name "*.zip"
 
       - name: Create Release and Upload Asset
         if: success()
         uses: softprops/action-gh-release@v1
         with:
-          files: out/target/product/${{ matrix.target }}/*.zip
+          # This pattern looks in all subfolders of 'out' to find your ROM
+          files: |
+            out/**/*.zip
           tag_name: ${{ github.run_id }}
           name: "Build ${{ github.run_id }}"
         env:
