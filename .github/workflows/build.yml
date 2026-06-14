@@ -44,6 +44,10 @@ jobs:
           ./scripts/extract_fw.sh
           ./scripts/make_rom.sh
 
+      - name: Locate ZIP file
+        if: always()
+        run: find out -name "*.zip"
+
       - name: Create Release and Upload Asset
         if: success()
         uses: softprops/action-gh-release@v1
