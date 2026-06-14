@@ -21,10 +21,16 @@ jobs:
         with:
           submodules: 'recursive'
 
-      - name: Cleanup
+      - name: Free up disk space
         run: |
+          sudo swapoff -a
+          sudo rm -f /swapfile
+          sudo apt-get purge -y azure-cli google-cloud-sdk hhvm google-chrome-stable firefox powershell
+          sudo apt-get autoremove -y
+          sudo apt-get clean
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           sudo docker image prune --all --force
+          df -h
 
       - name: Setup
         run: |
