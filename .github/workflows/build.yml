@@ -25,10 +25,11 @@ jobs:
         run: |
           sudo swapoff -a
           sudo rm -f /swapfile
-          sudo apt-get purge -y azure-cli google-cloud-sdk hhvm google-chrome-stable firefox powershell
+          # Using || true ensures the build continues if a package isn't found
+          sudo apt-get purge -y azure-cli google-cloud-sdk hhvm google-chrome-stable firefox powershell || true
           sudo apt-get autoremove -y
           sudo apt-get clean
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
           sudo docker image prune --all --force
           df -h
 
