@@ -14,8 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Reduced matrix to [r9q] for testing until you get a successful upload
-        target: [r9q] 
+        target: [r9q]
 
     steps:
       - uses: actions/checkout@v6
@@ -51,27 +50,26 @@ jobs:
           ./scripts/extract_fw.sh
           ./scripts/make_rom.sh
 
+      - name: Locate and Identify ROM
+        if: always()
+        run: |
+          echo "Listing ALL files in 'out/' to find the missing ROM:"
+          ls -R out/
+
       - name: Fix permissions
         if: always()
         run: |
           sudo chown -R $USER:$USER out/
           sudo chmod -R 755 out/
 
-      - name: Locate and Identify ROM
-        if: always()
-        run: |
-          echo "Listing all files in out/ to find the ROM..."
-          # This command finds all files larger than 100MB, which are likely your ROMs
-          find out -type f -size +100M -exec ls -lh {} +
-
       - name: Create Release and Upload Asset
         if: success()
         uses: softprops/action-gh-release@v1
         with:
-          # This pattern looks for common Android build output naming conventions
           files: |
-            out/target/product/${{ matrix.target }}/*.zip
-            out/target/product/${{ matrix.target }}/*.tar.gz
+            out/**/*.zip
+            out/**/*.tar.gz
+            out/**/*.img
           tag_name: ${{ github.run_id }}
           name: "Build ${{ github.run_id }}"
         env:
