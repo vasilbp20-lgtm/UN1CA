@@ -32,12 +32,10 @@ jobs:
           sudo docker image prune --all --force
           df -h
 
-      - name: Setup
+      - name: Setup Environment
         run: |
           sudo apt update && sudo apt install -yq 7zip attr ccache clang ffmpeg libbrotli-dev libgtest-dev libprotobuf-dev libunwind-dev libpcre2-dev libzstd-dev linux-modules-extra-$(uname -r) lld protobuf-compiler webp
           sudo modprobe erofs f2fs
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           mkdir -p security
           echo -n "${{ secrets.PLATFORM_KEY_PK8 }}" | base64 --decode > security/unica_platform.pk8
           echo -n "${{ secrets.PLATFORM_KEY_PEM }}" | base64 --decode > security/unica_platform.x509.pem
@@ -48,17 +46,8 @@ jobs:
           ./scripts/build_dependencies.sh
           ./scripts/download_fw.sh
           ./scripts/extract_fw.sh
-          # If this script fails, check your build.gradle for the 403 error
+          # This now triggers the packaging process automatically
           ./scripts/make_rom.sh
-          # IMPORTANT: If your ROM isn't packaging, add 'mka bacon' here.
-
-      - name: Diagnostic Inspection
-        if: always()
-        run: |
-          echo "--- Searching for potential ROM files (300MB+) ---"
-          find out -type f -size +300M -exec ls -lh {} +
-          echo "--- Listing final output directory ---"
-          find out -name "*.zip"
 
       - name: Fix permissions
         if: always()
@@ -67,11 +56,12 @@ jobs:
           sudo chmod -R 755 out/
 
       - name: Create Release
-        if: success() # Only runs if Build ROM step succeeds
+        if: success()
         uses: softprops/action-gh-release@v1
         with:
+          # This glob pattern captures the final flashable zip
           files: |
-            out/target/product/${{ matrix.target }}/*.zip
+            out/**/*.zip
           tag_name: ${{ github.run_id }}
           name: "Build ${{ github.run_id }}"
           fail_on_unmatched_files: false
