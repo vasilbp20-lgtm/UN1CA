@@ -14,7 +14,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [a52sxq, a53x, a73xq, b0q, g0q, m52xq, o1s, p3s, r0q, r9s, t2s, r9q]
+        # Reduced matrix to [r9q] for testing until you get a successful upload
+        target: [r9q] 
 
     steps:
       - uses: actions/checkout@v6
@@ -47,8 +48,6 @@ jobs:
           source ./buildenv.sh ${{ matrix.target }}
           ./scripts/build_dependencies.sh
           ./scripts/download_fw.sh
-          # IMPORTANT: If your scripts/extract_fw.sh doesn't delete the zip,
-          # you may need to add: rm -f out/odin/*.zip after this line.
           ./scripts/extract_fw.sh
           ./scripts/make_rom.sh
 
@@ -58,17 +57,21 @@ jobs:
           sudo chown -R $USER:$USER out/
           sudo chmod -R 755 out/
 
-      - name: Locate ZIP file
+      - name: Locate and Identify ROM
         if: always()
-        run: find out -name "*.zip"
+        run: |
+          echo "Listing all files in out/ to find the ROM..."
+          # This command finds all files larger than 100MB, which are likely your ROMs
+          find out -type f -size +100M -exec ls -lh {} +
 
       - name: Create Release and Upload Asset
         if: success()
         uses: softprops/action-gh-release@v1
         with:
-          # Targets ONLY the final ROM file to avoid permission errors on other files
+          # This pattern looks for common Android build output naming conventions
           files: |
             out/target/product/${{ matrix.target }}/*.zip
+            out/target/product/${{ matrix.target }}/*.tar.gz
           tag_name: ${{ github.run_id }}
           name: "Build ${{ github.run_id }}"
         env:
