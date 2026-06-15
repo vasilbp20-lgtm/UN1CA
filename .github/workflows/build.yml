@@ -49,6 +49,16 @@ jobs:
           ./scripts/download_fw.sh
           ./scripts/extract_fw.sh
           ./scripts/make_rom.sh
+          # Add the packaging command here if it's missing in your script
+          # mka bacon
+
+      - name: Debug Output and Identify ROM
+        if: always()
+        run: |
+          echo "--- Searching for any file over 300MB ---"
+          find out -type f -size +300M -exec ls -lh {} +
+          echo "--- Listing final output directory ---"
+          ls -R out/target/product/${{ matrix.target }}/ || echo "Product directory missing."
 
       - name: Fix permissions
         if: always()
@@ -56,20 +66,13 @@ jobs:
           sudo chown -R $USER:$USER out/
           sudo chmod -R 755 out/
 
-      - name: Locate and Identify ROM
-        if: always()
-        run: |
-          echo "Listing all files in out/ to find the ROM..."
-          # This prints the size and path of every single file
-          find out -type f -exec ls -lh {} + | sort -rh | head -n 20
-
       - name: Create Release and Upload Asset
         if: success()
         uses: softprops/action-gh-release@v1
         with:
-          # Only attempt to upload if a matching file is found
           files: |
             out/target/product/${{ matrix.target }}/*.zip
+            out/target/product/${{ matrix.target }}/*.tar.gz
           tag_name: ${{ github.run_id }}
           name: "Build ${{ github.run_id }}"
           fail_on_unmatched_files: false
