@@ -48,15 +48,8 @@ jobs:
           ./scripts/build_dependencies.sh
           ./scripts/download_fw.sh
           ./scripts/extract_fw.sh
+          # The Gradle failure is happening here:
           ./scripts/make_rom.sh
-          # IMPORTANT: If your ROM is not packaging, ensure 
-          # a command like 'mka bacon' is at the end of make_rom.sh.
-
-      - name: Locate Build Artifacts
-        if: always()
-        run: |
-          echo "--- Searching for potential ROM files (300MB+) ---"
-          find out -type f -size +300M -exec ls -lh {} +
 
       - name: Fix permissions
         if: always()
@@ -68,7 +61,6 @@ jobs:
         if: success()
         uses: softprops/action-gh-release@v1
         with:
-          # Target only the expected product directory
           files: |
             out/target/product/${{ matrix.target }}/*.zip
           tag_name: ${{ github.run_id }}
