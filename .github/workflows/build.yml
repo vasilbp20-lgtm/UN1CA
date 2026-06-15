@@ -47,26 +47,28 @@ jobs:
           source ./buildenv.sh ${{ matrix.target }}
           ./scripts/build_dependencies.sh
           ./scripts/download_fw.sh
+          # IMPORTANT: If your scripts/extract_fw.sh doesn't delete the zip,
+          # you may need to add: rm -f out/odin/*.zip after this line.
           ./scripts/extract_fw.sh
           ./scripts/make_rom.sh
-
-      - name: Locate ZIP file
-        if: always()
-        run: |
-          echo "Scanning for ROM files..."
-          find out -name "*.zip"
 
       - name: Fix permissions
         if: always()
         run: |
           sudo chown -R $USER:$USER out/
+          sudo chmod -R 755 out/
+
+      - name: Locate ZIP file
+        if: always()
+        run: find out -name "*.zip"
 
       - name: Create Release and Upload Asset
         if: success()
         uses: softprops/action-gh-release@v1
         with:
+          # Targets ONLY the final ROM file to avoid permission errors on other files
           files: |
-            out/**/*.zip
+            out/target/product/${{ matrix.target }}/*.zip
           tag_name: ${{ github.run_id }}
           name: "Build ${{ github.run_id }}"
         env:
