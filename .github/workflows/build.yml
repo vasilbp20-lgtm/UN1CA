@@ -53,14 +53,18 @@ jobs:
       - name: Locate ZIP file
         if: always()
         run: |
-          echo "Deep scanning for ROM files..."
+          echo "Scanning for ROM files..."
           find out -name "*.zip"
+
+      - name: Fix permissions
+        if: always()
+        run: |
+          sudo chown -R $USER:$USER out/
 
       - name: Create Release and Upload Asset
         if: success()
         uses: softprops/action-gh-release@v1
         with:
-          # This pattern looks in all subfolders of 'out' to find your ROM
           files: |
             out/**/*.zip
           tag_name: ${{ github.run_id }}
