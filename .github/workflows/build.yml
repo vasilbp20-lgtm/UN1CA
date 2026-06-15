@@ -11,29 +11,17 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [r9q]
-
     steps:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
 
-      - name: Free up disk space
+      - name: Setup
         run: |
-          sudo swapoff -a
-          sudo rm -f /swapfile
-          sudo apt-get purge -y azure-cli google-cloud-sdk hhvm google-chrome-stable firefox powershell || true
-          sudo apt-get autoremove -y
-          sudo apt-get clean
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
-          sudo docker image prune --all --force
-          df -h
-
-      - name: Setup Environment
-        run: |
+          # Crucial: Set git identity
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
           sudo apt update && sudo apt install -yq 7zip attr ccache clang ffmpeg libbrotli-dev libgtest-dev libprotobuf-dev libunwind-dev libpcre2-dev libzstd-dev linux-modules-extra-$(uname -r) lld protobuf-compiler webp
           sudo modprobe erofs f2fs
           mkdir -p security
@@ -42,28 +30,19 @@ jobs:
 
       - name: Build ROM
         run: |
-          source ./buildenv.sh ${{ matrix.target }}
+          source ./buildenv.sh r9q
           ./scripts/build_dependencies.sh
           ./scripts/download_fw.sh
           ./scripts/extract_fw.sh
-          # This now triggers the packaging process automatically
-          ./scripts/make_rom.sh
-
-      - name: Fix permissions
-        if: always()
-        run: |
-          sudo chown -R $USER:$USER out/
-          sudo chmod -R 755 out/
+          # Run build and force package creation
+          ./scripts/make_rom.sh -f -z
 
       - name: Create Release
         if: success()
         uses: softprops/action-gh-release@v1
         with:
-          # This glob pattern captures the final flashable zip
-          files: |
-            out/**/*.zip
+          files: out/**/*.zip
           tag_name: ${{ github.run_id }}
-          name: "Build ${{ github.run_id }}"
           fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
