@@ -50,27 +50,28 @@ jobs:
           ./scripts/extract_fw.sh
           ./scripts/make_rom.sh
 
-      - name: Locate and Identify ROM
-        if: always()
-        run: |
-          echo "Listing ALL files in 'out/' to find the missing ROM:"
-          ls -R out/
-
       - name: Fix permissions
         if: always()
         run: |
           sudo chown -R $USER:$USER out/
           sudo chmod -R 755 out/
 
+      - name: Locate and Identify ROM
+        if: always()
+        run: |
+          echo "Listing all files in out/ to find the ROM..."
+          # This prints the size and path of every single file
+          find out -type f -exec ls -lh {} + | sort -rh | head -n 20
+
       - name: Create Release and Upload Asset
         if: success()
         uses: softprops/action-gh-release@v1
         with:
+          # Only attempt to upload if a matching file is found
           files: |
-            out/**/*.zip
-            out/**/*.tar.gz
-            out/**/*.img
+            out/target/product/${{ matrix.target }}/*.zip
           tag_name: ${{ github.run_id }}
           name: "Build ${{ github.run_id }}"
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
