@@ -49,14 +49,16 @@ jobs:
           ./scripts/download_fw.sh
           ./scripts/extract_fw.sh
           ./scripts/make_rom.sh
-          # IMPORTANT: If your ROM is not appearing, verify if your build script 
-          # actually runs a packaging command (like 'mka bacon') at the end.
+          # IMPORTANT: Check if your make_rom.sh ends with a command like 'mka bacon'. 
+          # If not, the ROM will not be packaged.
 
-      - name: Locate Build Artifacts
+      - name: Diagnostic Inspection
         if: always()
         run: |
-          echo "--- Searching for potential ROM files (300MB+) ---"
+          echo "--- Searching for files over 300MB ---"
           find out -type f -size +300M -exec ls -lh {} +
+          echo "--- Checking for any .zip files ---"
+          find out -name "*.zip" -not -path "*/.*"
 
       - name: Fix permissions
         if: always()
@@ -68,8 +70,7 @@ jobs:
         if: success()
         uses: softprops/action-gh-release@v1
         with:
-          # EXPLICIT PATH: This prevents the action from scanning 
-          # restricted subfolders that cause EACCES errors.
+          # Only target the product directory to avoid 'EACCES' errors from fw/ folders
           files: |
             out/target/product/${{ matrix.target }}/*.zip
             out/target/product/${{ matrix.target }}/*.tar.gz
