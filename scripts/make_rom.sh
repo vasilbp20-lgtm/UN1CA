@@ -2,13 +2,13 @@
 # Copyright (c) 2025 Salvo Giangreco
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# [
 source "$SRC_DIR/scripts/utils/build_utils.sh" || exit 1
 
-FORCE=false
-BUILD_ROM=false
+# --- CONFIGURATION: FORCED TO TRUE FOR GITHUB ACTIONS ---
+FORCE=true
+BUILD_ROM=true
 BUILD_TARGET_FILES=true
-BUILD_FLASHABLE_ZIP=false
+BUILD_FLASHABLE_ZIP=true 
 
 START_TIME="$(date +%s)"
 
@@ -39,7 +39,6 @@ PREPARE_SCRIPT()
             PRINT_USAGE
             exit 1
         fi
-
         shift
     done
 }
@@ -49,10 +48,8 @@ PRINT_BUILD_OUTCOME()
     local EXIT_CODE="$?"
     local END_TIME
     local ESTIMATED
-
     END_TIME="$(date +%s)"
     ESTIMATED="$((END_TIME - START_TIME))"
-
     if [ "$EXIT_CODE" != "0" ]; then
         echo -n -e '\n\033[1;31m'"Build failed "
     else
@@ -68,30 +65,18 @@ PRINT_USAGE()
     echo " -x, --no-target-files : Do not build target-files zip" >&2
     echo " -z, --build-rom-zip : Build flashable zip" >&2
 }
-# ]
 
 PREPARE_SCRIPT "$@"
 
-if $FORCE; then
+# --- FORCED BUILD LOGIC ---
+if [ "$FORCE" = true ]; then
     BUILD_ROM=true
-else
-    if [ -f "$WORK_DIR/.completed" ]; then
-        if [[ "$(cat "$WORK_DIR/.completed")" == "$(GET_WORK_DIR_HASH)" ]]; then
-            LOGW "No changes have been detected in the build environment"
-            BUILD_ROM=false
-        else
-            LOGW "Changes detected in the build environment"
-            BUILD_ROM=true
-        fi
-    else
-        BUILD_ROM=true
-    fi
 fi
 
 trap 'PRINT_BUILD_OUTCOME' EXIT
 trap 'echo' INT
 
-if $BUILD_ROM; then
+if [ "$BUILD_ROM" = true ]; then
     [ -d "$APKTOOL_DIR" ] && rm -rf "$APKTOOL_DIR"
     [ -f "$WORK_DIR/.completed" ] && rm -f "$WORK_DIR/.completed"
 
@@ -125,7 +110,6 @@ if $BUILD_ROM; then
         "$SRC_DIR/scripts/internal/apply_modules.sh" "$SRC_DIR/unica/patches" || exit 1
         LOG_STEP_OUT
     fi
-
     if [ -d "$SRC_DIR/unica/mods" ]; then
         LOG_STEP_IN true "Applying ROM mods"
         "$SRC_DIR/scripts/internal/apply_modules.sh" "$SRC_DIR/unica/mods" || exit 1
@@ -134,7 +118,6 @@ if $BUILD_ROM; then
 
     if [ -d "$APKTOOL_DIR" ]; then
         LOG_STEP_IN true "Building APKs/JARs"
-
         while IFS= read -r f; do
             f="${f/$APKTOOL_DIR\//}"
             PARTITION="$(cut -d "/" -f 1 -s <<< "$f")"
@@ -144,17 +127,13 @@ if $BUILD_ROM; then
                 "$SRC_DIR/scripts/apktool.sh" b "$PARTITION" "$(cut -d "/" -f 2- -s <<< "$f")" &
             fi
         done < <(find "$APKTOOL_DIR" -type d \( -name "*.apk" -o -name "*.jar" \))
-
-        # shellcheck disable=SC2046
         wait $(jobs -p) || exit 1
-
         LOG_STEP_OUT
     fi
-
     echo -n "$(GET_WORK_DIR_HASH)" > "$WORK_DIR/.completed"
 fi
 
-if $BUILD_TARGET_FILES || $BUILD_FLASHABLE_ZIP; then
+if [ "$BUILD_TARGET_FILES" = true ] || [ "$BUILD_FLASHABLE_ZIP" = true ]; then
     ZIP_FILE_NAME="${TARGET_CODENAME}_"
     if [ "$(GET_PROP "system" "ro.unica.version")" ]; then
         ZIP_FILE_NAME+="$(GET_PROP "system" "ro.unica.version")"
@@ -162,20 +141,16 @@ if $BUILD_TARGET_FILES || $BUILD_FLASHABLE_ZIP; then
         ZIP_FILE_NAME+="$ROM_VERSION"
     fi
     ZIP_FILE_NAME+="-target_files.zip"
-
     if [ ! -f "$OUT_DIR/$ZIP_FILE_NAME" ]; then
         LOG_STEP_IN true "Creating target-files zip"
         "$SRC_DIR/scripts/internal/create_target_files_zip.sh" "$OUT_DIR/$ZIP_FILE_NAME" || exit 1
         LOG_STEP_OUT
-    else
-        LOGW "File already exists: ${OUT_DIR//$SRC_DIR\//}/$ZIP_FILE_NAME"
     fi
-
-    if $BUILD_FLASHABLE_ZIP; then
+    if [ "$BUILD_FLASHABLE_ZIP" = true ]; then
         LOG_STEP_IN true "Creating flashable zip"
         "$SRC_DIR/scripts/build_flashable_zip.sh" "$OUT_DIR/$ZIP_FILE_NAME" || exit 1
         LOG_STEP_OUT
     fi
 fi
-
 exit 0
+
