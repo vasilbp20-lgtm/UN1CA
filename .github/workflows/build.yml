@@ -49,16 +49,14 @@ jobs:
           ./scripts/download_fw.sh
           ./scripts/extract_fw.sh
           ./scripts/make_rom.sh
-          # IMPORTANT: Verify if your script actually triggers a packager like 'mka bacon'
-          # If not, add it here.
+          # IMPORTANT: If your ROM is not appearing, verify if your build script 
+          # actually runs a packaging command (like 'mka bacon') at the end.
 
       - name: Locate Build Artifacts
         if: always()
         run: |
           echo "--- Searching for potential ROM files (300MB+) ---"
           find out -type f -size +300M -exec ls -lh {} +
-          echo "--- Listing all ZIP files in 'out/' ---"
-          find out -name "*.zip"
 
       - name: Fix permissions
         if: always()
@@ -70,9 +68,11 @@ jobs:
         if: success()
         uses: softprops/action-gh-release@v1
         with:
+          # EXPLICIT PATH: This prevents the action from scanning 
+          # restricted subfolders that cause EACCES errors.
           files: |
-            out/**/*.zip
-            out/**/*.tar.gz
+            out/target/product/${{ matrix.target }}/*.zip
+            out/target/product/${{ matrix.target }}/*.tar.gz
           tag_name: ${{ github.run_id }}
           name: "Build ${{ github.run_id }}"
           fail_on_unmatched_files: false
