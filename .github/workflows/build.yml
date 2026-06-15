@@ -48,8 +48,17 @@ jobs:
           ./scripts/build_dependencies.sh
           ./scripts/download_fw.sh
           ./scripts/extract_fw.sh
-          # The Gradle failure is happening here:
+          # If this script fails, check your build.gradle for the 403 error
           ./scripts/make_rom.sh
+          # IMPORTANT: If your ROM isn't packaging, add 'mka bacon' here.
+
+      - name: Diagnostic Inspection
+        if: always()
+        run: |
+          echo "--- Searching for potential ROM files (300MB+) ---"
+          find out -type f -size +300M -exec ls -lh {} +
+          echo "--- Listing final output directory ---"
+          find out -name "*.zip"
 
       - name: Fix permissions
         if: always()
@@ -58,7 +67,7 @@ jobs:
           sudo chmod -R 755 out/
 
       - name: Create Release
-        if: success()
+        if: success() # Only runs if Build ROM step succeeds
         uses: softprops/action-gh-release@v1
         with:
           files: |
