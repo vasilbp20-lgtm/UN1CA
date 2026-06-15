@@ -49,13 +49,22 @@ jobs:
           ./scripts/download_fw.sh
           ./scripts/extract_fw.sh
           ./scripts/make_rom.sh
+          # IMPORTANT: Verify if your script actually triggers a packager like 'mka bacon'
+          # If not, add it here.
 
-      - name: Inspect Build Output
+      - name: Locate Build Artifacts
         if: always()
         run: |
-          echo "--- COMPLETE FILE LIST IN 'out/' ---"
-          # This command lists every file in the out directory so we can identify the ROM
-          find out -type f -exec ls -lh {} + | sort -rh | head -n 50
+          echo "--- Searching for potential ROM files (300MB+) ---"
+          find out -type f -size +300M -exec ls -lh {} +
+          echo "--- Listing all ZIP files in 'out/' ---"
+          find out -name "*.zip"
+
+      - name: Fix permissions
+        if: always()
+        run: |
+          sudo chown -R $USER:$USER out/
+          sudo chmod -R 755 out/
 
       - name: Create Release
         if: success()
