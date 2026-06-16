@@ -17,13 +17,13 @@ jobs:
 
       - name: Setup Environment
         run: |
-          # Set Git identity to prevent patcher errors
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # Install dependencies to resolve 'cwebp', 'protoc', and 'android-tools' build failures
+          # Install everything needed to build, including the tools we were trying to compile
           sudo apt update && sudo apt install -yq \
             build-essential cmake pkg-config libusb-1.0-0-dev libssl-dev \
+            android-sdk-platform-tools-common android-tools-adb android-tools-fastboot \
             7zip attr ccache clang ffmpeg webp protobuf-compiler
           
           mkdir -p security
@@ -33,7 +33,8 @@ jobs:
       - name: Build ROM
         run: |
           source ./buildenv.sh r9q
-          # Force build and packaging
+          # Force build and skip internal tool compilation if possible
+          export SKIP_TOOL_BUILD=true
           ./scripts/make_rom.sh -f -z
 
       - name: Create Release
