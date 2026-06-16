@@ -17,11 +17,11 @@ jobs:
 
       - name: Setup
         run: |
-          # Set identity to prevent patcher errors
+          # 1. FIX GIT IDENTITY: Required for the patcher to function
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # Install missing dependencies (webp and protobuf-compiler)
+          # 2. INSTALL MISSING DEPENDENCIES: Fixes the 'cwebp' and 'protoc' errors
           sudo apt update && sudo apt install -yq 7zip attr ccache clang ffmpeg webp protobuf-compiler
           
           mkdir -p security
@@ -31,13 +31,14 @@ jobs:
       - name: Build ROM
         run: |
           source ./buildenv.sh r9q
-          # Force build and packaging
+          # 3. FORCE BUILD AND PACKAGE: -f forces the build, -z enables the zip
           ./scripts/make_rom.sh -f -z
 
       - name: Create Release
         if: success()
         uses: softprops/action-gh-release@v1
         with:
+          # Targets the output folder to capture the final flashable zip
           files: out/**/*.zip
           tag_name: ${{ github.run_id }}
           fail_on_unmatched_files: false
