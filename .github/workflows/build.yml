@@ -17,11 +17,11 @@ jobs:
 
       - name: Setup Environment
         run: |
-          # 1. FIX GIT IDENTITY: Required for the patcher to function
+          # Set Git identity to prevent patcher errors
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # 2. INSTALL DEPENDENCIES: Includes headers for cmake, android-tools, and image processing
+          # Install dependencies to resolve 'cwebp', 'protoc', and 'android-tools' build failures
           sudo apt update && sudo apt install -yq \
             build-essential cmake pkg-config libusb-1.0-0-dev libssl-dev \
             7zip attr ccache clang ffmpeg webp protobuf-compiler
@@ -33,7 +33,7 @@ jobs:
       - name: Build ROM
         run: |
           source ./buildenv.sh r9q
-          # -f forces fresh build; -z enables packaging
+          # Force build and packaging
           ./scripts/make_rom.sh -f -z
 
       - name: Create Release
