@@ -15,14 +15,15 @@ jobs:
         with:
           submodules: 'recursive'
 
-      - name: Setup
+      - name: Setup Environment
         run: |
-          # 1. FIX GIT IDENTITY: Required for the patcher to function
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # 2. INSTALL MISSING DEPENDENCIES: Fixes the 'cwebp' and 'protoc' errors
-          sudo apt update && sudo apt install -yq 7zip attr ccache clang ffmpeg webp protobuf-compiler
+          # Added essential build tools and libraries for CMake/Android-Tools
+          sudo apt update && sudo apt install -yq \
+            build-essential cmake pkg-config libusb-1.0-0-dev libssl-dev \
+            7zip attr ccache clang ffmpeg webp protobuf-compiler
           
           mkdir -p security
           echo -n "${{ secrets.PLATFORM_KEY_PK8 }}" | base64 --decode > security/unica_platform.pk8
@@ -31,14 +32,12 @@ jobs:
       - name: Build ROM
         run: |
           source ./buildenv.sh r9q
-          # 3. FORCE BUILD AND PACKAGE: -f forces the build, -z enables the zip
           ./scripts/make_rom.sh -f -z
 
       - name: Create Release
         if: success()
         uses: softprops/action-gh-release@v1
         with:
-          # Targets the output folder to capture the final flashable zip
           files: out/**/*.zip
           tag_name: ${{ github.run_id }}
           fail_on_unmatched_files: false
