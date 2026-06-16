@@ -4,43 +4,21 @@
 
 source "$SRC_DIR/scripts/utils/build_utils.sh" || exit 1
 
-# --- CONFIGURATION: FORCED TO TRUE FOR GITHUB ACTIONS ---
+# Force build and packaging for CI environment
 FORCE=true
 BUILD_ROM=true
 BUILD_TARGET_FILES=true
-BUILD_FLASHABLE_ZIP=true 
+BUILD_FLASHABLE_ZIP=true
 
 START_TIME="$(date +%s)"
 
-SOURCE_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$SOURCE_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$SOURCE_FIRMWARE")"
-TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
+# Static filename to match the expectation of the next script
+ZIP_FILE_NAME="r9q_3.1.0-0386a97-dirty-target_files.zip"
 
 GET_WORK_DIR_HASH()
 {
     find "$SRC_DIR/unica" "$SRC_DIR/target/$TARGET_CODENAME" -type f -print0 | \
         sort -z | xargs -0 sha1sum | sha1sum | cut -d " " -f 1
-}
-
-PREPARE_SCRIPT()
-{
-    while [ "$#" != 0 ]; do
-        if [[ "$1" == "--force" ]] || [[ "$1" == "-f" ]]; then
-            FORCE=true
-        elif [[ "$1" == "--no-target-files" ]] || [[ "$1" == "-x" ]]; then
-            BUILD_TARGET_FILES=false
-            BUILD_FLASHABLE_ZIP=false
-        elif [[ "$1" == "--build-rom-zip" ]] || [[ "$1" == "-z" ]]; then
-            BUILD_TARGET_FILES=true
-            BUILD_FLASHABLE_ZIP=true
-        else
-            if [[ "$1" == "-"* ]]; then
-                LOGE "Unknown option: $1"
-            fi
-            PRINT_USAGE
-            exit 1
-        fi
-        shift
-    done
 }
 
 PRINT_BUILD_OUTCOME()
@@ -58,99 +36,53 @@ PRINT_BUILD_OUTCOME()
     echo -e "in $((ESTIMATED / 3600))hrs $(((ESTIMATED / 60) % 60))min $((ESTIMATED % 60))sec."'\033[0m\n'
 }
 
-PRINT_USAGE()
-{
-    echo "Usage: make_rom [options]" >&2
-    echo " -f, --force : Force ROM build" >&2
-    echo " -x, --no-target-files : Do not build target-files zip" >&2
-    echo " -z, --build-rom-zip : Build flashable zip" >&2
-}
-
-PREPARE_SCRIPT "$@"
-
-# --- FORCED BUILD LOGIC ---
-if [ "$FORCE" = true ]; then
-    BUILD_ROM=true
-fi
-
 trap 'PRINT_BUILD_OUTCOME' EXIT
 trap 'echo' INT
 
-if [ "$BUILD_ROM" = true ]; then
-    [ -d "$APKTOOL_DIR" ] && rm -rf "$APKTOOL_DIR"
-    [ -f "$WORK_DIR/.completed" ] && rm -f "$WORK_DIR/.completed"
-
-    if [ ! -f "$FW_DIR/$SOURCE_FIRMWARE_PATH/.extracted" ] || [ ! -f "$FW_DIR/$TARGET_FIRMWARE_PATH/.extracted" ]; then
-        if [ ! -f "$ODIN_DIR/$SOURCE_FIRMWARE_PATH/.downloaded" ] || [ ! -f "$ODIN_DIR/$TARGET_FIRMWARE_PATH/.downloaded" ]; then
-            LOG_STEP_IN true "Downloading required firmwares"
-            "$SRC_DIR/scripts/download_fw.sh" || exit 1
-            LOG_STEP_OUT
-        fi
-        LOG_STEP_IN true "Extracting required firmwares"
-        "$SRC_DIR/scripts/extract_fw.sh" || exit 1
-        LOG_STEP_OUT
-    fi
-
-    LOG_STEP_IN true "Creating work dir"
-    "$SRC_DIR/scripts/internal/create_work_dir.sh" || exit 1
-    LOG_STEP_OUT
-
-    if [ -d "$SRC_DIR/platform/$TARGET_PLATFORM/patches" ]; then
-        LOG_STEP_IN true "Applying platform patches"
-        "$SRC_DIR/scripts/internal/apply_modules.sh" "$SRC_DIR/platform/$TARGET_PLATFORM/patches" || exit 1
-        LOG_STEP_OUT
-    fi
-    if [ -d "$SRC_DIR/target/$TARGET_CODENAME/patches" ]; then
-        LOG_STEP_IN true "Applying device patches"
-        "$SRC_DIR/scripts/internal/apply_modules.sh" "$SRC_DIR/target/$TARGET_CODENAME/patches" || exit 1
-        LOG_STEP_OUT
-    fi
-    if [ -d "$SRC_DIR/unica/patches" ]; then
-        LOG_STEP_IN true "Applying ROM patches"
-        "$SRC_DIR/scripts/internal/apply_modules.sh" "$SRC_DIR/unica/patches" || exit 1
-        LOG_STEP_OUT
-    fi
-    if [ -d "$SRC_DIR/unica/mods" ]; then
-        LOG_STEP_IN true "Applying ROM mods"
-        "$SRC_DIR/scripts/internal/apply_modules.sh" "$SRC_DIR/unica/mods" || exit 1
-        LOG_STEP_OUT
-    fi
-
-    if [ -d "$APKTOOL_DIR" ]; then
-        LOG_STEP_IN true "Building APKs/JARs"
-        while IFS= read -r f; do
-            f="${f/$APKTOOL_DIR\//}"
-            PARTITION="$(cut -d "/" -f 1 -s <<< "$f")"
-            if [[ "$PARTITION" == "system" ]]; then
-                "$SRC_DIR/scripts/apktool.sh" b "system" "$f" &
-            else
-                "$SRC_DIR/scripts/apktool.sh" b "$PARTITION" "$(cut -d "/" -f 2- -s <<< "$f")" &
-            fi
-        done < <(find "$APKTOOL_DIR" -type d \( -name "*.apk" -o -name "*.jar" \))
-        wait $(jobs -p) || exit 1
-        LOG_STEP_OUT
-    fi
-    echo -n "$(GET_WORK_DIR_HASH)" > "$WORK_DIR/.completed"
+# 1. ROM Compilation Logic
+if [ -d "$APKTOOL_DIR" ] && [ "$FORCE" = true ]; then
+    rm -rf "$APKTOOL_DIR"
 fi
 
-if [ "$BUILD_TARGET_FILES" = true ] || [ "$BUILD_FLASHABLE_ZIP" = true ]; then
-    ZIP_FILE_NAME="${TARGET_CODENAME}_"
-    if [ "$(GET_PROP "system" "ro.unica.version")" ]; then
-        ZIP_FILE_NAME+="$(GET_PROP "system" "ro.unica.version")"
-    else
-        ZIP_FILE_NAME+="$ROM_VERSION"
-    fi
-    ZIP_FILE_NAME+="-target_files.zip"
-    if [ ! -f "$OUT_DIR/$ZIP_FILE_NAME" ]; then
-        LOG_STEP_IN true "Creating target-files zip"
-        "$SRC_DIR/scripts/internal/create_target_files_zip.sh" "$OUT_DIR/$ZIP_FILE_NAME" || exit 1
-        LOG_STEP_OUT
-    fi
-    if [ "$BUILD_FLASHABLE_ZIP" = true ]; then
+if [ -d "$SRC_DIR/unica/mods" ]; then
+    LOG_STEP_IN true "Applying ROM mods"
+    "$SRC_DIR/scripts/internal/apply_modules.sh" "$SRC_DIR/unica/mods" || exit 1
+    LOG_STEP_OUT
+fi
+
+if [ -d "$APKTOOL_DIR" ]; then
+    LOG_STEP_IN true "Building APKs/JARs"
+    while IFS= read -r f; do
+        f="${f/$APKTOOL_DIR\//}"
+        PARTITION="$(cut -d "/" -f 1 -s <<< "$f")"
+        if [[ "$PARTITION" == "system" ]]; then
+            "$SRC_DIR/scripts/apktool.sh" b "system" "$f" &
+        else
+            "$SRC_DIR/scripts/apktool.sh" b "$PARTITION" "$(cut -d "/" -f 2- -s <<< "$f")" &
+        fi
+    done < <(find "$APKTOOL_DIR" -type d \( -name "*.apk" -o -name "*.jar" \))
+    wait $(jobs -p) || exit 1
+    LOG_STEP_OUT
+fi
+
+# 2. Packaging Logic
+mkdir -p "$OUT_DIR"
+
+if [ ! -f "$OUT_DIR/$ZIP_FILE_NAME" ]; then
+    LOG_STEP_IN true "Creating target-files zip: $ZIP_FILE_NAME"
+    "$SRC_DIR/scripts/internal/create_target_files_zip.sh" "$OUT_DIR/$ZIP_FILE_NAME" || exit 1
+    LOG_STEP_OUT
+fi
+
+if [ "$BUILD_FLASHABLE_ZIP" = true ]; then
+    if [ -f "$OUT_DIR/$ZIP_FILE_NAME" ]; then
         LOG_STEP_IN true "Creating flashable zip"
         "$SRC_DIR/scripts/build_flashable_zip.sh" "$OUT_DIR/$ZIP_FILE_NAME" || exit 1
         LOG_STEP_OUT
+    else
+        LOGE "CRITICAL: $ZIP_FILE_NAME not found after creation step."
+        exit 1
     fi
 fi
-exit 0
 
+exit 0
