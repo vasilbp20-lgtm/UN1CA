@@ -17,14 +17,13 @@ jobs:
 
       - name: Setup Environment
         run: |
-          # 1. FIX GIT IDENTITY: Required for the patcher to function
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # 2. INSTALL DEPENDENCIES: Added libbrotli-dev to resolve the cmake error
+          # Dependencies including libbrotli-dev to resolve previous missing package errors
           sudo apt update && sudo apt install -yq \
             build-essential cmake pkg-config libusb-1.0-0-dev libssl-dev libbrotli-dev \
-            7zip attr ccache clang ffmpeg webp protobuf-compiler
+            7zip attr clang ffmpeg webp protobuf-compiler
           
           mkdir -p security
           echo -n "${{ secrets.PLATFORM_KEY_PK8 }}" | base64 --decode > security/unica_platform.pk8
@@ -33,7 +32,9 @@ jobs:
       - name: Build ROM
         run: |
           source ./buildenv.sh r9q
-          # -f forces fresh build; -z enables packaging
+          # Explicitly set compiler environment
+          export CC=clang
+          export CXX=clang++
           ./scripts/make_rom.sh -f -z
 
       - name: Create Release
