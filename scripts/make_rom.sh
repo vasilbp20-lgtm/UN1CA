@@ -9,7 +9,7 @@ LOG_STEP_IN true "Initializing workspace"
 mkdir -p "$OUT_DIR/target/r9q/work_dir/configs/"
 LOG_STEP_OUT
 
-# 2. Patching (No build commands here)
+# 2. Patching (No build commands included)
 if [ -d "$SRC_DIR/unica/mods" ]; then
     LOG_STEP_IN true "Applying ROM mods"
     "$SRC_DIR/scripts/internal/apply_modules.sh" "$SRC_DIR/unica/mods" || exit 1
