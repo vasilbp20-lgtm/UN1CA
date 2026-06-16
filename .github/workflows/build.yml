@@ -11,22 +11,21 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
+      # Removed submodules: 'recursive' to prevent the repo from pulling android-tools
       - uses: actions/checkout@v6
-        with:
-          submodules: 'recursive'
 
       - name: Setup Environment
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # 1. DELETE THE SOURCE: This prevents Error 2 by removing the target
-          rm -rf external/android-tools
-          
-          # 2. Install dependencies
+          # Install dependencies
           sudo apt update && sudo apt install -yq \
             build-essential cmake pkg-config libusb-1.0-0-dev libssl-dev libbrotli-dev \
             7zip attr clang ffmpeg webp protobuf-compiler
+          
+          # Use official system binaries to ensure compatibility
+          sudo apt install -y android-sdk-platform-tools-common
           
           mkdir -p security
           echo -n "${{ secrets.PLATFORM_KEY_PK8 }}" | base64 --decode > security/unica_platform.pk8
@@ -35,7 +34,8 @@ jobs:
       - name: Build ROM
         run: |
           source ./buildenv.sh r9q
-          # Execute the cleaned script
+          # Force the script to run WITHOUT tool compilation
+          export SKIP_TOOL_BUILD=true
           ./scripts/make_rom.sh -f -z
 
       - name: Create Release
