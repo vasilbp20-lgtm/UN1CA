@@ -21,9 +21,9 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # 2. INSTALL DEPENDENCIES: Includes headers for cmake, android-tools, and image processing
+          # 2. INSTALL DEPENDENCIES: Added libbrotli-dev to resolve the cmake error
           sudo apt update && sudo apt install -yq \
-            build-essential cmake pkg-config libusb-1.0-0-dev libssl-dev \
+            build-essential cmake pkg-config libusb-1.0-0-dev libssl-dev libbrotli-dev \
             7zip attr ccache clang ffmpeg webp protobuf-compiler
           
           mkdir -p security
