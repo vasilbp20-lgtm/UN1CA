@@ -20,14 +20,15 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # Install dependencies
+          # Install core dependencies
           sudo apt update && sudo apt install -yq \
             build-essential cmake pkg-config libusb-1.0-0-dev libssl-dev libbrotli-dev \
             7zip attr clang ffmpeg webp protobuf-compiler
           
-          # DOWNLOAD PRE-COMPILED TOOLS: Bypasses boringssl compilation failure
+          # DOWNLOAD OFFICIAL TOOLS (Bypasses compilation errors)
           wget -q https://dl.google.com/android/repository/platform-tools-latest-linux.zip
           unzip -q platform-tools-latest-linux.zip -d $HOME/platform-tools
+          export PATH=$PATH:$HOME/platform-tools
           
           mkdir -p security
           echo -n "${{ secrets.PLATFORM_KEY_PK8 }}" | base64 --decode > security/unica_platform.pk8
@@ -36,9 +37,7 @@ jobs:
       - name: Build ROM
         run: |
           source ./buildenv.sh r9q
-          # Point the build to the pre-compiled tools
           export PATH=$PATH:$HOME/platform-tools
-          export PREBUILT_TOOLS=true
           ./scripts/make_rom.sh -f -z
 
       - name: Create Release
