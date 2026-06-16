@@ -17,12 +17,11 @@ jobs:
 
       - name: Setup Environment
         run: |
-          # Mandatory: Fixes "Committer identity unknown"
+          # Set Git identity to satisfy the patcher
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # Mandatory: Fixes 'cmake' / 'android-tools' build failures
-          # We add essential headers and development libraries needed for compilation
+          # Install dependencies to resolve 'cwebp', 'protoc', and 'android-tools' build failures
           sudo apt update && sudo apt install -yq \
             build-essential cmake pkg-config libusb-1.0-0-dev libssl-dev \
             7zip attr ccache clang ffmpeg webp protobuf-compiler
@@ -34,7 +33,7 @@ jobs:
       - name: Build ROM
         run: |
           source ./buildenv.sh r9q
-          # -f forces build, -z enables packaging
+          # Force build (-f) and trigger packaging (-z)
           ./scripts/make_rom.sh -f -z
 
       - name: Create Release
