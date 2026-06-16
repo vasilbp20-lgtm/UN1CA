@@ -6,7 +6,7 @@ FORCE=true
 # 1. INITIALIZE WORKSPACE FIRST
 LOG_STEP_IN true "Initializing workspace"
 "$SRC_DIR/scripts/internal/create_work_dir.sh" || { echo "Failed to create work dir"; exit 1; }
-# Explicitly create the config directory to avoid "No such file" errors
+# Explicitly create the config directory
 mkdir -p "$OUT_DIR/target/r9q/work_dir/configs/"
 LOG_STEP_OUT
 
@@ -18,7 +18,6 @@ if [ -d "$SRC_DIR/unica/mods" ]; then
 fi
 
 # 3. PACKAGING
-# Use a static name to ensure the subsequent script finds the file
 ZIP_FILE_NAME="r9q_final_build.zip"
 LOG_STEP_IN true "Creating flashable zip"
 "$SRC_DIR/scripts/internal/create_target_files_zip.sh" "$OUT_DIR/$ZIP_FILE_NAME" || exit 1
