@@ -9,14 +9,13 @@ LOG_STEP_IN true "Initializing workspace"
 mkdir -p "$OUT_DIR/target/r9q/work_dir/configs/"
 LOG_STEP_OUT
 
-# 2. Build Tools (Optimized to fix Error 2)
+# 2. Build Tools (Hardened for stability)
 LOG_STEP_IN true "Building android-tools"
-# Removed ccache to prevent link corruption, forced static libs
+# Disable ccache, force static libs, and use single-thread to avoid OOM/Linker errors
 cmake -B "build" -DCMAKE_SYSTEM_NAME="Linux" \
       -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
       -DBUILD_SHARED_LIBS=OFF . 
-# Attempt parallel build, fallback to single-threaded if it fails
-make -C build -j$(nproc) || make -C build -j1 || exit 1
+make -C build -j1
 LOG_STEP_OUT
 
 # 3. Patching
