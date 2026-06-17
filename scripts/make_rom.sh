@@ -5,12 +5,12 @@ source "$SRC_DIR/scripts/utils/build_utils.sh" || exit 1
 "$SRC_DIR/scripts/internal/create_work_dir.sh" || { echo "Failed to create work dir"; exit 1; }
 mkdir -p "$OUT_DIR/target/r9q/work_dir/configs/"
 
-# 2. ЗАЩИТНА СТЕНА: Прескачаме компилацията на инструменти
+# 2. ЗАЩИТНА СТЕНА: Прескачаме изцяло компилацията на инструменти
 if [ "$SKIP_TOOL_BUILD" = "true" ]; then
-    echo "Skipping android-tools compilation (prebuilt tools will be used)."
+    echo "Компилацията на инструменти е пропусната (използват се системни бинарни файлове)."
 else
     # Ако някой скрипт вътре се опита да стартира cmake/make, тук го спираме
-    echo "ERROR: Build environment attempted to compile tools. Aborting."
+    echo "ГРЕШКА: Build средата се опитва да компилира инструменти локално. Прекратяване."
     exit 1
 fi
 
