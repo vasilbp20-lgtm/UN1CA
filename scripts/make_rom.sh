@@ -6,10 +6,10 @@ source "$SRC_DIR/scripts/utils/build_utils.sh" || exit 1
 mkdir -p "$OUT_DIR/target/r9q/work_dir/configs/"
 
 # 2. Hard Stop for Tool Compilation (Circuit Breaker)
-# If any internal script tries to trigger the compiler, stop here.
 if [ "$SKIP_TOOL_BUILD" = "true" ]; then
     echo "Skipping tool build as requested."
 else
+    # Abort if the build tries to trigger the compiler
     echo "CRITICAL ERROR: Build environment attempted to compile tools locally. Aborting."
     exit 1
 fi
