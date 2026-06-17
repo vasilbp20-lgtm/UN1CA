@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 source "$SRC_DIR/scripts/utils/build_utils.sh" || exit 1
 
-FORCE=true
-
 # 1. Initialize Workspace
 "$SRC_DIR/scripts/internal/create_work_dir.sh" || { echo "Failed to create work dir"; exit 1; }
 mkdir -p "$OUT_DIR/target/r9q/work_dir/configs/"
 
-# 2. Hard Circuit Breaker: Do NOT allow tool compilation
-if [ "$SKIP_TOOL_BUILD" != "true" ]; then
-    echo "ERROR: Build attempted to compile tools locally. This is blocked to prevent OOM errors."
+# 2. Hard Stop for Tool Compilation
+# If any internal script tries to trigger the compiler, stop here.
+if [ "$SKIP_TOOL_BUILD" = "true" ]; then
+    echo "Skipping tool build as requested."
+else
+    # Prevent compilation to stop OOM/Linker crashes
+    echo "Tool compilation is disabled to prevent build crashes."
     exit 1
 fi
 
