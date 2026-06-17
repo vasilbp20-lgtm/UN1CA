@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-      # Use a flat checkout. Do NOT use submodules: 'recursive'
+      # Removed submodules: 'recursive' to prevent the repo from pulling android-tools source
       - uses: actions/checkout@v6
 
       - name: Setup Environment
@@ -19,7 +19,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # Install dependencies AND the system-provided platform tools
+          # Install core dependencies and system-provided platform tools
           sudo apt update && sudo apt install -yq \
             build-essential cmake pkg-config libusb-1.0-0-dev libssl-dev libbrotli-dev \
             7zip attr clang ffmpeg webp protobuf-compiler android-sdk-platform-tools-common
@@ -31,7 +31,7 @@ jobs:
       - name: Build ROM
         run: |
           source ./buildenv.sh r9q
-          # Inject a variable to tell your scripts to skip local building
+          # Set flag to explicitly skip internal tool compilation
           export SKIP_TOOL_BUILD=true
           ./scripts/make_rom.sh -f -z
 
