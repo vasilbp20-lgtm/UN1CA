@@ -19,7 +19,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # Инсталираме необходимите пакети от системното хранилище
+          # Инсталираме системни пакети, включително предварително компилираните инструменти
           sudo apt update && sudo apt install -yq \
             build-essential cmake pkg-config libusb-1.0-0-dev libssl-dev libbrotli-dev \
             7zip attr clang ffmpeg webp protobuf-compiler android-sdk-platform-tools-common
@@ -31,7 +31,7 @@ jobs:
       - name: Build ROM
         run: |
           source ./buildenv.sh r9q
-          # Флаг, който казва на скриптовете ни да не докосват компилацията на инструменти
+          # Флаг за спиране на локалната компилация
           export SKIP_TOOL_BUILD=true
           ./scripts/make_rom.sh -f -z
 
