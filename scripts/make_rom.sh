@@ -5,13 +5,12 @@ source "$SRC_DIR/scripts/utils/build_utils.sh" || exit 1
 "$SRC_DIR/scripts/internal/create_work_dir.sh" || { echo "Failed to create work dir"; exit 1; }
 mkdir -p "$OUT_DIR/target/r9q/work_dir/configs/"
 
-# 2. Hard Stop for Tool Compilation
+# 2. Hard Stop for Tool Compilation (Circuit Breaker)
 # If any internal script tries to trigger the compiler, stop here.
 if [ "$SKIP_TOOL_BUILD" = "true" ]; then
     echo "Skipping tool build as requested."
 else
-    # Prevent compilation to stop OOM/Linker crashes
-    echo "Tool compilation is disabled to prevent build crashes."
+    echo "CRITICAL ERROR: Build environment attempted to compile tools locally. Aborting."
     exit 1
 fi
 
