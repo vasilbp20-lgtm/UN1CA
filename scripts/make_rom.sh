@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 source "$SRC_DIR/scripts/utils/build_utils.sh" || exit 1
 
-# 1. Initialize Workspace
+# 1. Инициализация
 "$SRC_DIR/scripts/internal/create_work_dir.sh" || { echo "Failed to create work dir"; exit 1; }
 mkdir -p "$OUT_DIR/target/r9q/work_dir/configs/"
 
-# 2. Hard Stop for Tool Compilation (Circuit Breaker)
+# 2. ЗАЩИТНА СТЕНА: Прескачаме компилацията на инструменти
 if [ "$SKIP_TOOL_BUILD" = "true" ]; then
-    echo "Skipping tool build as requested."
+    echo "Skipping android-tools compilation (prebuilt tools will be used)."
 else
-    # Abort if the build tries to trigger the compiler
-    echo "CRITICAL ERROR: Build environment attempted to compile tools locally. Aborting."
+    # Ако някой скрипт вътре се опита да стартира cmake/make, тук го спираме
+    echo "ERROR: Build environment attempted to compile tools. Aborting."
     exit 1
 fi
 
@@ -19,7 +19,7 @@ if [ -d "$SRC_DIR/unica/mods" ]; then
     "$SRC_DIR/scripts/internal/apply_modules.sh" "$SRC_DIR/unica/mods" || exit 1
 fi
 
-# 4. Packaging
+# 4. Пакетиране
 ZIP_FILE_NAME="r9q_final_build.zip"
 "$SRC_DIR/scripts/internal/create_target_files_zip.sh" "$OUT_DIR/$ZIP_FILE_NAME" || exit 1
 "$SRC_DIR/scripts/build_flashable_zip.sh" "$OUT_DIR/$ZIP_FILE_NAME" || exit 1
