@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-      # Removed submodules: 'recursive' to prevent triggering the faulty Makefile
+      # Use a flat checkout without recursive submodules to prevent triggering the faulty Makefile
       - uses: actions/checkout@v6
 
       - name: Setup Environment
@@ -19,7 +19,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # Install dependencies and pre-compiled platform tools
+          # Install core build dependencies and official pre-compiled platform tools
           sudo apt update && sudo apt install -yq \
             build-essential cmake pkg-config libusb-1.0-0-dev libssl-dev libbrotli-dev \
             7zip attr clang ffmpeg webp protobuf-compiler android-sdk-platform-tools-common
@@ -31,8 +31,8 @@ jobs:
       - name: Build ROM
         run: |
           source ./buildenv.sh r9q
-          # Set flag to tell scripts to bypass local tool building
-          export USE_PREBUILT_TOOLS=1
+          # Set an environment flag to force the build script to skip local tool compilation
+          export SKIP_TOOL_BUILD=true
           ./scripts/make_rom.sh -f -z
 
       - name: Create Release
