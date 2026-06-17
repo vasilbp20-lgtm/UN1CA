@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-      # Removed submodules: 'recursive' to prevent the repo from pulling android-tools source
+      # Removed submodules: 'recursive' to prevent triggering the build of internal tools
       - uses: actions/checkout@v6
 
       - name: Setup Environment
@@ -19,7 +19,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # Install core dependencies AND the system-provided platform tools
+          # Install dependencies AND the system-provided platform tools
           # Using android-sdk-platform-tools-common avoids building from source
           sudo apt update && sudo apt install -yq \
             build-essential cmake pkg-config libusb-1.0-0-dev libssl-dev libbrotli-dev \
